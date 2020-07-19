@@ -7,11 +7,8 @@ class CategoryItem extends StatelessWidget {
   final Color color;
 
   selectCategory(BuildContext ctx) {
-    Navigator.of(ctx).push(MaterialPageRoute(
-        builder: (_) => CategoryMealsScreen(
-              id: id,
-              tittle: title,
-            )));
+    Navigator.of(ctx).pushNamed(CategoryMealsScreen.routeName,
+        arguments: {'id': id, 'title': title});
   }
 
   const CategoryItem({Key key, this.id, this.title, this.color})
