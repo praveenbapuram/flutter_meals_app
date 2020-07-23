@@ -1,15 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_meals_app/dummy_data.dart';
 import 'package:flutter_meals_app/screens/categories_screen.dart';
 import 'package:flutter_meals_app/screens/category_meals_screen.dart';
+import 'package:flutter_meals_app/screens/filters_screen.dart';
 import 'package:flutter_meals_app/screens/meal_details_screen.dart';
 import 'package:flutter_meals_app/screens/tabs_screen.dart';
+
+import 'models/meal.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   // This widget is the root of your application.
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Map<String, bool> _filters = {
+    'gluten': false,
+    'lactose': false,
+    'vegan': false,
+    'vegetarian': false,
+  };
+
+  List<Meal> availableMeals = DUMMY_MEALS;
+  List<Meal> favourites = [];
+
+  void _toggleFavourite(String mealId) {
+    final existingIndex = favourites.indexWhere((meal) {
+      return meal.id == mealId;
+    });
+    print('existing INdex ' + existingIndex.toString());
+    if (existingIndex >= 0) {
+      setState(() {
+        favourites.removeAt(existingIndex);
+      });
+    } else {
+      setState(() {
+        favourites.add(DUMMY_MEALS.firstWhere((meal) => meal.id == mealId));
+      });
+    }
+  }
+
+  setFilter(Map<String, bool> _filterData) {
+    setState(() {
+      _filters = _filterData;
+      availableMeals = DUMMY_MEALS.where((meal) {
+        if (_filters['gluten'] == true && !meal.isGlutenFree) {
+          return false;
+        }
+        if (_filters['lactose'] == true && !meal.isLactoseFree) {
+          return false;
+        }
+        if (_filters['vegan'] == true && !meal.isVegan) {
+          return false;
+        }
+        if (_filters['vegetarian'] == true && !meal.isVegetarian) {
+          return false;
+        }
+        return true;
+      }).toList();
+    });
+  }
+
+  bool isFavourite(String mealId) {
+    print(mealId);
+    bool retValue = favourites.any((meal) => meal.id == mealId);
+    print('return Value : ' + retValue.toString());
+    return retValue;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -37,9 +100,16 @@ class MyApp extends StatelessWidget {
       ),
       //home: CategoriesScreen(),
       routes: {
-        '/': (ctx) => TabsScreen(),
-        CategoryMealsScreen.routeName: (ctx) => CategoryMealsScreen(),
-        MealDetailScreen.routeName: (ctx) => MealDetailScreen(),
+        '/': (ctx) => TabsScreen(
+              favouriteMeals: favourites,
+            ),
+        CategoryMealsScreen.routeName: (ctx) =>
+            CategoryMealsScreen(availableMeals),
+        MealDetailScreen.routeName: (ctx) => MealDetailScreen(
+              toggle: _toggleFavourite,
+              isFavourite: isFavourite,
+            ),
+        FiltersScreen.routeName: (ctx) => FiltersScreen(_filters, setFilter),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/abc') {
